@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact & Booking System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        /* Custom scrollbar for aesthetics */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #9ca3af;
+            border-radius: 20px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background-color: #e5e7eb;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen">
+
+    <div id="app" class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 p-4 bg-white rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2 md:mb-0">Contact & Booking Manager</h1>
+            <div class="text-sm text-gray-600">
+                User ID: <span id="userIdDisplay" class="font-mono bg-gray-100 p-1 rounded text-xs text-indigo-600">Loading...</span>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Column 1: Add Contact Form -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg h-fit">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Add New Contact</h2>
+                <form id="addContactForm">
+                    <div class="mb-4">
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <input type="text" id="name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    </div>
+                    <div class="mb-4">
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    </div>
+                    <div class="mb-6">
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone (Optional)</label>
+                        <input type="tel" id="phone" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-200 shadow-md">
+                        Save Contact
+                    </button>
+                    <p id="formStatus" class="text-sm mt-2 text-center hidden"></p>
+                </form>
+            </div>
+
+            <!-- Column 2: Contact List -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Your Contacts</h2>
+                <div id="contactsList" class="space-y-3 custom-scrollbar max-h-[60vh] overflow-y-auto">
+                    <p class="text-gray-500 text-center py-4" id="loadingMessage">Loading contacts or waiting for authentication...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal for Booking Details -->
+        <div id="bookingModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 hidden items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl p-6 relative">
+                <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                <h3 class="text-3xl font-bold text-indigo-600 mb-4 border-b pb-2">Contact Details</h3>
+                
+                <!-- Contact Info Display -->
+                <div class="space-y-1 mb-6">
+                    <p class="text-lg font-semibold" id="detailName"></p>
+                    <p class="text-gray-600">Email: <span id="detailEmail" class="font-medium"></span></p>
+                    <p class="text-gray-600">Phone: <span id="detailPhone" class="font-medium"></span></p>
+                    <p class="text-gray-400 text-xs">ID: <span id="detailId" class="font-mono"></span></p>
+                </div>
+
+                <!-- Add Booking Form -->
+                <h4 class="text-xl font-semibold text-gray-700 mb-3 mt-6 border-t pt-4">Schedule New Booking</h4>
+                <form id="addBookingForm" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label for="bookingDate" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input type="date" id="bookingDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label for="bookingTime" class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                        <input type="time" id="bookingTime" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div class="md:col-span-1 flex flex-col justify-end">
+                        <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-200 shadow-md">
+                            Add Booking
+                        </button>
+                    </div>
+                    <div class="md:col-span-3">
+                        <label for="bookingDescription" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <input type="text" id="bookingDescription" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                </form>
+
+                <!-- Booking History -->
+                <h4 class="text-xl font-semibold text-gray-700 mb-3 border-t pt-4">Booking History</h4>
+                <div id="bookingHistory" class="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+                    <p class="text-gray-500 text-center py-2">No bookings yet.</p>
+                </div>
+                
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase Imports and Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, setDoc, updateDoc, onSnapshot, collection, query, serverTimestamp, setLogLevel, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- GLOBAL CONFIG & VARIABLES ---
+        setLogLevel('Debug');
+        let db, auth;
+        let userId = null;
+        let currentContactId = null;
+
+        // Check for global variables and initialize
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+        // Firestore private collection path builder
+        const getCollectionPath = () => `/artifacts/${appId}/users/${userId}/contacts_bookings/contacts`;
+        
+        // --- UTILITY FUNCTIONS ---
+
+        /**
+         * Safely gets a value from an object or provides a default.
+         * @param {Object} obj
+         * @param {string} key
+         * @param {string} defaultValue
+         * @returns {string}
+         */
+        const safeGet = (obj, key, defaultValue = '') => obj && obj[key] !== undefined ? obj[key] : defaultValue;
+
+        // --- FIREBASE INITIALIZATION & AUTH ---
+
+        const initFirebase = async () => {
+            try {
+                if (Object.keys(firebaseConfig).length === 0) {
+                    console.error("Firebase config is empty. Cannot initialize.");
+                    document.getElementById('loadingMessage').textContent = "ERROR: Firebase configuration is missing.";
+                    return;
+                }
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // Sign in with custom token or anonymously
+                const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (token) {
+                    await signInWithCustomToken(auth, token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Listen for authentication state changes
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        document.getElementById('userIdDisplay').textContent = userId;
+                        // Once authenticated, start listening to contacts
+                        setupContactListener();
+                    } else {
+                        console.log("User is signed out.");
+                        document.getElementById('userIdDisplay').textContent = 'Guest (Signed out)';
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase or signing in:", error);
+                document.getElementById('loadingMessage').textContent = `ERROR: ${error.message}`;
+            }
+        };
+
+        // --- FIRESTORE CRUD & REAL-TIME LISTENER ---
+
+        /**
+         * Sets up a real-time listener for the contacts collection.
+         */
+        const setupContactListener = () => {
+            if (!userId) return; // Wait for userId to be set
+
+            const contactsRef = collection(db, getCollectionPath());
+            const q = query(contactsRef);
+            
+            // onSnapshot provides real-time updates
+            onSnapshot(q, (snapshot) => {
+                const contacts = [];
+                snapshot.forEach(doc => {
+                    contacts.push({ id: doc.id, ...doc.data() });
+                });
+                
+                // Sort contacts alphabetically by name
+                contacts.sort((a, b) => a.name.localeCompare(b.name));
+
+                renderContacts(contacts);
+            }, (error) => {
+                console.error("Error listening to contacts:", error);
+                document.getElementById('loadingMessage').textContent = "Error loading data.";
+            });
+        };
+
+        /**
+         * Adds a new contact to Firestore.
+         * @param {Event} e 
+         */
+        const handleAddContact = async (e) => {
+            e.preventDefault();
+            if (!userId) {
+                alertUser('Please wait for authentication to complete.', 'text-red-500');
+                return;
+            }
+
+            const nameInput = document.getElementById('name').value.trim();
+            const emailInput = document.getElementById('email').value.trim();
+            const phoneInput = document.getElementById('phone').value.trim();
+
+            if (!nameInput || !emailInput) {
+                alertUser('Name and Email are required.', 'text-red-500');
+                return;
+            }
+
+            try {
+                const contactsRef = collection(db, getCollectionPath());
+                const newContact = {
+                    name: nameInput,
+                    email: emailInput,
+                    phone: phoneInput,
+                    bookings: [], // Initialize bookings array
+                    createdAt: serverTimestamp()
+                };
+
+                await addDoc(contactsRef, newContact);
+
+                // Clear form and show success message
+                document.getElementById('addContactForm').reset();
+                alertUser('Contact saved successfully!', 'text-green-600');
+
+            } catch (error) {
+                console.error("Error adding contact:", error);
+                alertUser(`Error: ${error.message}`, 'text-red-500');
+            }
+        };
+
+        /**
+         * Adds a new booking to the currently selected contact.
+         * @param {Event} e 
+         */
+        const handleAddBooking = async (e) => {
+            e.preventDefault();
+            if (!userId || !currentContactId) {
+                console.error("User or Contact ID not set.");
+                return;
+            }
+
+            const dateInput = document.getElementById('bookingDate').value;
+            const timeInput = document.getElementById('bookingTime').value;
+            const descriptionInput = document.getElementById('bookingDescription').value.trim();
+
+            if (!dateInput || !timeInput || !descriptionInput) {
+                alertUser('Date, Time, and Description are required for a booking.', 'text-red-500', 'formStatus');
+                return;
+            }
+
+            try {
+                const contactDocRef = doc(db, getCollectionPath(), currentContactId);
+                
+                const newBooking = {
+                    date: dateInput,
+                    time: timeInput,
+                    description: descriptionInput,
+                    bookedAt: serverTimestamp()
+                };
+
+                // Use arrayUnion to safely append the new booking
+                await updateDoc(contactDocRef, {
+                    bookings: arrayUnion(newBooking)
+                });
+
+                // Clear booking form and show success
+                document.getElementById('addBookingForm').reset();
+                // We don't need to re-render the modal; onSnapshot handles the data update
+                alertUser('Booking added successfully! (Updates automatically)', 'text-green-600', 'formStatus');
+
+
+            } catch (error) {
+                console.error("Error adding booking:", error);
+                alertUser(`Error adding booking: ${error.message}`, 'text-red-500', 'formStatus');
+            }
+        };
+
+        // --- UI RENDERING AND INTERACTION ---
+
+        /**
+         * Renders the list of contacts.
+         * @param {Array<Object>} contacts 
+         */
+        const renderContacts = (contacts) => {
+            const listContainer = document.getElementById('contactsList');
+            listContainer.innerHTML = ''; // Clear existing list
+
+            if (contacts.length === 0) {
+                listContainer.innerHTML = '<p class="text-gray-500 text-center py-4">No contacts added yet. Use the form on the left to add one!</p>';
+                return;
+            }
+
+            contacts.forEach(contact => {
+                const bookingsCount = contact.bookings ? contact.bookings.length : 0;
+                const contactElement = document.createElement('div');
+                contactElement.className = 'flex items-center justify-between p-4 bg-gray-50 hover:bg-indigo-50 rounded-lg transition duration-150 border-l-4 border-indigo-400 cursor-pointer shadow-sm';
+                contactElement.setAttribute('data-contact', JSON.stringify(contact));
+                contactElement.onclick = () => showContactDetails(contact);
+
+                contactElement.innerHTML = `
+                    <div class="flex-1">
+                        <p class="text-lg font-semibold text-gray-800">${safeGet(contact, 'name')}</p>
+                        <p class="text-sm text-gray-600 truncate">${safeGet(contact, 'email')}</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-xs font-medium px-3 py-1 bg-blue-100 text-blue-700 rounded-full">
+                            ${bookingsCount} Bookings
+                        </span>
+                        <button class="text-indigo-600 hover:text-indigo-800 focus:outline-none">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </button>
+                    </div>
+                `;
+                listContainer.appendChild(contactElement);
+            });
+        };
+
+        /**
+         * Opens the modal and displays contact and booking details.
+         * @param {Object} contact 
+         */
+        const showContactDetails = (contact) => {
+            currentContactId = contact.id;
+
+            // 1. Update Contact Info
+            document.getElementById('detailName').textContent = safeGet(contact, 'name');
+            document.getElementById('detailEmail').textContent = safeGet(contact, 'email');
+            document.getElementById('detailPhone').textContent = safeGet(contact, 'phone', 'N/A');
+            document.getElementById('detailId').textContent = safeGet(contact, 'id');
+
+            // 2. Render Booking History
+            const historyContainer = document.getElementById('bookingHistory');
+            historyContainer.innerHTML = '';
+            const bookings = contact.bookings || [];
+            
+            if (bookings.length === 0) {
+                historyContainer.innerHTML = '<p class="text-gray-500 text-center py-2">No bookings recorded for this contact.</p>';
+            } else {
+                // Sort bookings by date/time (most recent first, assuming format is YYYY-MM-DD HH:MM)
+                bookings.sort((a, b) => {
+                    const dateA = `${a.date} ${a.time}`;
+                    const dateB = `${b.date} ${b.time}`;
+                    return dateB.localeCompare(dateA); // Reverse for descending order
+                });
+
+                bookings.forEach(booking => {
+                    const bookingElement = document.createElement('div');
+                    bookingElement.className = 'p-3 bg-gray-100 rounded-lg border-l-4 border-green-500';
+                    bookingElement.innerHTML = `
+                        <p class="text-sm font-medium text-gray-800">${safeGet(booking, 'description')}</p>
+                        <p class="text-xs text-gray-500">
+                            ${safeGet(booking, 'date')} at ${safeGet(booking, 'time')}
+                        </p>
+                    `;
+                    historyContainer.appendChild(bookingElement);
+                });
+            }
+
+            // 3. Show Modal
+            document.getElementById('bookingModal').classList.remove('hidden');
+            document.getElementById('bookingModal').classList.add('flex');
+            
+            // 4. Reset form status
+            document.getElementById('formStatus').classList.add('hidden');
+        };
+
+        /**
+         * Closes the booking modal.
+         */
+        window.closeModal = () => {
+            document.getElementById('bookingModal').classList.add('hidden');
+            document.getElementById('bookingModal').classList.remove('flex');
+            currentContactId = null;
+        };
+
+        /**
+         * Utility to display a temporary status message in the form area.
+         * @param {string} message 
+         * @param {string} className 
+         * @param {string} elementId 
+         */
+        const alertUser = (message, className, elementId = 'formStatus') => {
+            const statusElement = document.getElementById(elementId);
+            if (!statusElement) return;
+
+            // Clear existing classes and set new ones
+            statusElement.className = `text-sm mt-2 text-center ${className}`;
+            statusElement.textContent = message;
+            statusElement.classList.remove('hidden');
+
+            setTimeout(() => {
+                statusElement.classList.add('hidden');
+                statusElement.textContent = '';
+            }, 5000);
+        };
+
+        // --- EVENT LISTENERS ---
+
+        document.getElementById('addContactForm').addEventListener('submit', handleAddContact);
+        document.getElementById('addBookingForm').addEventListener('submit', handleAddBooking);
+
+        // Initialize the application
+        initFirebase();
+    </script>
+</body>
+</html>
